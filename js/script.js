@@ -158,10 +158,15 @@ function populateSystems() {
     });
 }
 
+// =====================================================================
+// FUNÇÃO DE FILTRO ATUALIZADA (COM STATUS REALIZADO/PENDENTE)
+// =====================================================================
 function applyFilters() {
     const sys = document.getElementById('filterSystem').value;
     const search = document.getElementById('searchInput').value.toLowerCase();
     const loc = document.getElementById('filterLocal').value;
+    
+    // Pega o valor do novo dropdown
     const calibType = document.getElementById('filterCalib').value;
 
     const filtered = rawData.filter(item => {
@@ -169,15 +174,34 @@ function applyFilters() {
         const iTag = String(item.tag || "").toLowerCase();
         const iDesc = String(item.desc || "").toLowerCase();
         const iLoc = String(item.local || "").trim();
-        const iCalib = String(item.calib || "").toUpperCase();
+        
+        // Normaliza os valores para comparação
+        const iCalib = String(item.calib || "").toUpperCase(); // SIM ou NÃO
+        const iStatus = String(item.status_calib || "").toUpperCase(); // OK ou Vazio
 
         const matchSys = sys === "" || iSys === sys;
         const matchSearch = iTag.includes(search) || iDesc.includes(search);
         const matchLoc = loc === "" || iLoc === loc;
         
+        // --- LÓGICA DO NOVO FILTRO ---
         let matchCalib = true;
-        if(calibType === "SIM") matchCalib = iCalib.startsWith("SIM");
-        if(calibType === "NÃO") matchCalib = !iCalib.startsWith("SIM");
+
+        if (calibType === "SIM") {
+            // Mostra todos que são críticos
+            matchCalib = iCalib.startsWith("SIM");
+        } 
+        else if (calibType === "NÃO") {
+            // Mostra quem não precisa de calibração
+            matchCalib = !iCalib.startsWith("SIM");
+        }
+        else if (calibType === "REALIZADO") {
+            // CRÍTICO + STATUS OK
+            matchCalib = iCalib.startsWith("SIM") && iStatus.includes("OK");
+        }
+        else if (calibType === "PENDENTE") {
+            // CRÍTICO + STATUS NÃO OK (Vazio ou diferente de OK)
+            matchCalib = iCalib.startsWith("SIM") && !iStatus.includes("OK");
+        }
 
         return matchSys && matchSearch && matchLoc && matchCalib;
     });

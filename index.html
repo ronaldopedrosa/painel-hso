@@ -81,14 +81,16 @@
             <input type="text" id="searchInput" class="form-input" placeholder="Digite TAG, Descrição, Modelo..." onkeyup="applyFilters()">
         </div>
         
-        <div class="input-group" style="flex: 0 0 150px;">
-            <label>⚖️ Calibração</label>
-            <select id="filterCalib" class="form-select" onchange="applyFilters()">
-                <option value="">Todas</option>
-                <option value="SIM">✅ Críticos</option>
-                <option value="NÃO">❌ Não Críticos</option>
-            </select>
-        </div>
+        <div style="flex: 1; min-width: 200px;">
+    <label for="filterCalib" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">🎯 Calibração</label>
+    <select id="filterCalib" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+        <option value="">📊 Mostrar Tudo</option>
+        <option value="SIM">⚠️ Críticos (Todos)</option>
+        <option value="REALIZADO">✅ Críticos - Concluídos</option>
+        <option value="PENDENTE">⏳ Críticos - Pendentes</option>
+        <option value="NÃO">⚪ Não Críticos</option>
+    </select>
+</div>
     </div>
 
     <div class="table-wrapper">
