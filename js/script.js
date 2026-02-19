@@ -28,7 +28,6 @@ async function carregarExcel(input) {
 
                     const jsonExcel = XLSX.utils.sheet_to_json(worksheet);
 
-                    // Função para pegar valor limpo (Normalizado)
                     function getValue(row, possibleNames) {
                         const rowKeys = Object.keys(row);
                         const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -41,38 +40,33 @@ async function carregarExcel(input) {
                     }
 
                     const dadosProcessados = jsonExcel.map(linha => {
-                        // --- MUDANÇA PRINCIPAL AQUI ---
-                        // Agora ele busca PRIMEIRO na coluna "Sala/Sistema"
                         const rawSys = getValue(linha, ["Sala/Sistema", "Sistema", "Area", "Grupos de Instrumentos"]);
-                        
                         const tag = getValue(linha, ["TAG Hemobrás", "TAG", "Tag", "Instrumento", "Codigo"]);
                         const desc = getValue(linha, ["Descrição dos Equipamentos", "Descrição", "Descricao", "Nome"]);
                         const origem = getValue(linha, ["ORIGEM", "Origem"]);
                         
-                        // Preparando o texto para análise (Tudo maiúsculo)
                         const sysText = String(rawSys).toUpperCase();
-                        
                         let finalSys = "Geral / Outros"; 
 
-                        // === REGRAS DE TRADUÇÃO (Baseado na coluna Sala/Sistema) ===
+                        // === REGRAS DE TRADUÇÃO ATUALIZADAS ===
 
-                        // 1. ÁCIDO SULFÚRICO (HSO)
-                        if (sysText.includes("HSO") || sysText.includes("SULFURICO") || sysText.includes("ACIDO") || sysText.includes("H2SO4")) {
+                        // 1. QUÍMICOS (HNO / HNA) - NOVO!
+                        if (sysText.includes("HNO") || sysText.includes("HNA") || sysText.includes("QUIMICO") || sysText.includes("QUÍMICO")) {
+                            finalSys = "Químicos";
+                        }
+                        // 2. ÁCIDO SULFÚRICO (HSO)
+                        else if (sysText.includes("HSO") || sysText.includes("SULFURICO") || sysText.includes("ACIDO") || sysText.includes("H2SO4")) {
                             finalSys = "Ácido Sulfúrico";
                         }
-                        // 2. EFLUENTES (WW)
+                        // 3. EFLUENTES (WW)
                         else if (sysText.includes("WW") || sysText.includes("EFLUENTE") || sysText.includes("ESGOTO") || sysText.includes("TRATAMENTO")) {
                             finalSys = "Efluentes";
                         }
-                        // 3. AR COMPRIMIDO (CA/CAP)
-                        // Verifica "CA" isolado ou palavras chave para não confundir com "Mecânica" ou "Local"
+                        // 4. AR COMPRIMIDO (CA/CAP)
                         else if (sysText.includes("CA-") || sysText.includes("-CA") || sysText.includes(" CAP ") || sysText.includes("AR COMP") || sysText.includes("COMPRIMIDO") || sysText === "CA" || sysText === "CAP") {
                             finalSys = "Ar Comprimido";
                         }
-                        // 4. Caso não ache nas regras acima, mas tenha um nome válido na coluna Sistema, usa ele.
                         else if (rawSys.length > 2) {
-                             // Evita siglas curtas (AT, F, FA) que vinham da coluna errada. 
-                             // Se na coluna Sala/Sistema estiver escrito algo útil, usa ele.
                              finalSys = rawSys; 
                         }
 
@@ -80,14 +74,13 @@ async function carregarExcel(input) {
                             sistema: finalSys, 
                             tag: tag,
                             desc: desc,
-                            local: getValue(linha, ["Local", "Area"]), // Local separado
+                            local: getValue(linha, ["Local", "Area"]), 
                             calib: getValue(linha, ["Calibração (SIM ou NÃO)", "Calibracao", "Criticidade"]),
                             status_calib: getValue(linha, ["Status de qualificação", "Status", "Situação"]),
                             origem: origem
                         };
                     });
 
-                    // Remove linhas vazias
                     resolve(dadosProcessados.filter(item => item.tag !== "" || item.desc !== ""));
 
                 } catch (error) {
@@ -152,21 +145,17 @@ function populateSystems() {
         if (sys === "Efluentes") emoji = "💧";
         if (sys === "Ar Comprimido") emoji = "💨";
         if (sys === "Ácido Sulfúrico") emoji = "🧪";
+        if (sys === "Químicos") emoji = "🧪"; // Emoji de químicos
         
         opt.innerText = `${emoji} ${sys}`;
         select.appendChild(opt);
     });
 }
 
-// =====================================================================
-// FUNÇÃO DE FILTRO ATUALIZADA (COM STATUS REALIZADO/PENDENTE)
-// =====================================================================
 function applyFilters() {
     const sys = document.getElementById('filterSystem').value;
     const search = document.getElementById('searchInput').value.toLowerCase();
     const loc = document.getElementById('filterLocal').value;
-    
-    // Pega o valor do novo dropdown
     const calibType = document.getElementById('filterCalib').value;
 
     const filtered = rawData.filter(item => {
@@ -174,34 +163,18 @@ function applyFilters() {
         const iTag = String(item.tag || "").toLowerCase();
         const iDesc = String(item.desc || "").toLowerCase();
         const iLoc = String(item.local || "").trim();
-        
-        // Normaliza os valores para comparação
-        const iCalib = String(item.calib || "").toUpperCase(); // SIM ou NÃO
-        const iStatus = String(item.status_calib || "").toUpperCase(); // OK ou Vazio
+        const iCalib = String(item.calib || "").toUpperCase();
+        const iStatus = String(item.status_calib || "").toUpperCase();
 
         const matchSys = sys === "" || iSys === sys;
         const matchSearch = iTag.includes(search) || iDesc.includes(search);
         const matchLoc = loc === "" || iLoc === loc;
         
-        // --- LÓGICA DO NOVO FILTRO ---
         let matchCalib = true;
-
-        if (calibType === "SIM") {
-            // Mostra todos que são críticos
-            matchCalib = iCalib.startsWith("SIM");
-        } 
-        else if (calibType === "NÃO") {
-            // Mostra quem não precisa de calibração
-            matchCalib = !iCalib.startsWith("SIM");
-        }
-        else if (calibType === "REALIZADO") {
-            // CRÍTICO + STATUS OK
-            matchCalib = iCalib.startsWith("SIM") && iStatus.includes("OK");
-        }
-        else if (calibType === "PENDENTE") {
-            // CRÍTICO + STATUS NÃO OK (Vazio ou diferente de OK)
-            matchCalib = iCalib.startsWith("SIM") && !iStatus.includes("OK");
-        }
+        if (calibType === "SIM") matchCalib = iCalib.startsWith("SIM");
+        else if (calibType === "NÃO") matchCalib = !iCalib.startsWith("SIM");
+        else if (calibType === "REALIZADO") matchCalib = iCalib.startsWith("SIM") && iStatus.includes("OK");
+        else if (calibType === "PENDENTE") matchCalib = iCalib.startsWith("SIM") && !iStatus.includes("OK");
 
         return matchSys && matchSearch && matchLoc && matchCalib;
     });
@@ -234,8 +207,10 @@ function updateTable(data) {
             ? `<span class="calib-yes">SIM</span>` 
             : `<span class="calib-no">${item.calib || "NÃO"}</span>`;
 
-        let sysClass = "sys-ar"; 
+        // Cores e Ícones na Tabela
+        let sysClass = "sys-ar"; // cor cinza padrão
         let sysIcon = "🔧";
+        let extraStyle = ""; // Para estilos caprichados
         const sysName = String(item.sistema);
         
         if (sysName === "Efluentes") { 
@@ -245,13 +220,18 @@ function updateTable(data) {
             sysClass = "sys-ar"; 
             sysIcon = "💨"; 
         } else if (sysName === "Ácido Sulfúrico") {
-            sysClass = "sys-eflu"; // ou crie uma cor específica no CSS
+            sysClass = "sys-eflu"; 
             sysIcon = "🧪";
+        } else if (sysName === "Químicos") {
+            sysClass = ""; // Remove o CSS padrão para usar o estilo roxo vibrante
+            sysIcon = "🧪";
+            // O CAPRICHO: Fundo roxo, texto branco para destacar os químicos!
+            extraStyle = "background-color: #8b5cf6; color: white;"; 
         }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><span class="sys-badge ${sysClass}">${sysIcon} ${sysName}</span></td>
+            <td><span class="sys-badge ${sysClass}" style="${extraStyle}">${sysIcon} ${sysName}</span></td>
             <td class="tag-text">${isPending ? '<span style="color:var(--danger)">-- S/ TAG --</span>' : tagClean}</td>
             <td>${item.desc}</td>
             <td>${item.local}</td>
@@ -303,6 +283,22 @@ function updateKPIs(data) {
 function animateValue(id, value) {
     const el = document.getElementById(id);
     if(el) el.innerText = value;
+}
+
+// =====================================================================
+// FUNÇÃO PARA LIMPAR TUDO
+// =====================================================================
+function limparDados() {
+    if (rawData.length === 0) {
+        alert("O painel já está limpo!");
+        return;
+    }
+
+    if (confirm("Tem certeza que deseja limpar todos os dados da tela?")) {
+        rawData = [];
+        document.getElementById('excelInput').value = "";
+        init();
+    }
 }
 
 window.onload = init;
