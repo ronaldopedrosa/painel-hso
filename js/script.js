@@ -48,11 +48,17 @@ async function carregarExcel(input) {
                         const sysText = String(rawSys).toUpperCase();
                         let finalSys = "Geral / Outros"; 
 
-                        // === REGRAS DE TRADUÇÃO ATUALIZADAS ===
+                        // === REGRAS DE TRADUÇÃO INTELIGENTES (PREPARADO PARA LOOP 2) ===
 
-                        // 1. PW (LOOP1) - Agora apenas "PW"
+                        // 1. ÁGUA PURIFICADA (PW_LOOP - 1 e PW_LOOP - 2)
                         if (sysText.includes("PW") || sysText.includes("LOOP") || sysText.includes("PURIFICADA")) {
-                            finalSys = "PW";
+                            if (sysText.includes("1")) {
+                                finalSys = "PW_LOOP - 1";
+                            } else if (sysText.includes("2")) {
+                                finalSys = "PW_LOOP - 2";
+                            } else {
+                                finalSys = "PW_LOOP"; // Caso venha sem número
+                            }
                         }
                         // 2. QUÍMICOS (HNO / HNA)
                         else if (sysText.includes("HNO") || sysText.includes("HNA") || sysText.includes("QUIMICO") || sysText.includes("QUÍMICO")) {
@@ -150,7 +156,7 @@ function populateSystems() {
         if (sys === "Ar Comprimido") emoji = "💨";
         if (sys === "Ácido Sulfúrico") emoji = "🧪";
         if (sys === "Químicos") emoji = "🧪"; 
-        if (sys === "PW") emoji = "💦"; // Atualizado para "PW"
+        if (sys.startsWith("PW_LOOP")) emoji = "💦"; // Pega o 1 e o 2 automaticamente
         
         opt.innerText = `${emoji} ${sys}`;
         select.appendChild(opt);
@@ -230,11 +236,17 @@ function updateTable(data) {
             sysClass = ""; 
             sysIcon = "🧪";
             extraStyle = "background-color: #8b5cf6; color: white;"; 
-        } else if (sysName === "PW") { // Atualizado para "PW"
+        } else if (sysName.startsWith("PW_LOOP")) {
             sysClass = ""; 
             sysIcon = "💦";
-            // Fundo Azul Claro (DeepSkyBlue) mais vibrante e limpo
-            extraStyle = "background-color: #00bfff; color: white;"; 
+            // Lógica para diferenciar as cores do LOOP 1 e LOOP 2
+            if (sysName.includes("1")) {
+                extraStyle = "background-color: #00bfff; color: white;"; // Azul Claro Vibrante
+            } else if (sysName.includes("2")) {
+                extraStyle = "background-color: #1e90ff; color: white;"; // Dodger Blue (Azul um pouquinho mais escuro)
+            } else {
+                extraStyle = "background-color: #00bfff; color: white;"; 
+            }
         }
 
         const tr = document.createElement('tr');
