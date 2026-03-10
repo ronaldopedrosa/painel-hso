@@ -16,7 +16,7 @@ async function carregarExcel(input) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             
-            // CAPTURA O NOME DO ARQUIVO (Ex: "PW_Loop_5.xlsm") E TRANSFORMA EM MAIÚSCULO
+            // CAPTURA O NOME DO ARQUIVO PARA IDENTIFICAR OS LOOPS
             const fileName = file.name.toUpperCase(); 
 
             reader.onload = function(e) {
@@ -51,39 +51,20 @@ async function carregarExcel(input) {
                         const sysText = String(rawSys).toUpperCase();
                         let finalSys = "Geral / Outros"; 
 
-                        // === REGRAS DE TRADUÇÃO INTELIGENTES (AVALIA CÉLULA E NOME DO ARQUIVO) ===
-
-                        // 1. ÁGUA PURIFICADA (PW_LOOP 1 ao 5)
+                        // === REGRAS DE TRADUÇÃO INTELIGENTES ===
                         if (sysText.includes("PW") || sysText.includes("LOOP") || sysText.includes("PURIFICADA") || fileName.includes("PW") || fileName.includes("LOOP")) {
-                            
-                            // Procura o número do loop na célula OU no nome do arquivo
                             if (sysText.includes("1") || fileName.includes("1")) finalSys = "PW_LOOP - 1";
                             else if (sysText.includes("2") || fileName.includes("2")) finalSys = "PW_LOOP - 2";
                             else if (sysText.includes("3") || fileName.includes("3")) finalSys = "PW_LOOP - 3";
                             else if (sysText.includes("4") || fileName.includes("4")) finalSys = "PW_LOOP - 4";
                             else if (sysText.includes("5") || fileName.includes("5")) finalSys = "PW_LOOP - 5";
-                            else finalSys = "PW_LOOP"; // Caso venha sem número
-                            
+                            else finalSys = "PW_LOOP"; 
                         }
-                        // 2. QUÍMICOS (HNO / HNA)
-                        else if (sysText.includes("HNO") || sysText.includes("HNA") || sysText.includes("QUIMICO") || sysText.includes("QUÍMICO")) {
-                            finalSys = "Químicos";
-                        }
-                        // 3. ÁCIDO SULFÚRICO (HSO)
-                        else if (sysText.includes("HSO") || sysText.includes("SULFURICO") || sysText.includes("ACIDO") || sysText.includes("H2SO4")) {
-                            finalSys = "Ácido Sulfúrico";
-                        }
-                        // 4. EFLUENTES (WW)
-                        else if (sysText.includes("WW") || sysText.includes("EFLUENTE") || sysText.includes("ESGOTO") || sysText.includes("TRATAMENTO")) {
-                            finalSys = "Efluentes";
-                        }
-                        // 5. AR COMPRIMIDO (CA/CAP)
-                        else if (sysText.includes("CA-") || sysText.includes("-CA") || sysText.includes(" CAP ") || sysText.includes("AR COMP") || sysText.includes("COMPRIMIDO") || sysText === "CA" || sysText === "CAP") {
-                            finalSys = "Ar Comprimido";
-                        }
-                        else if (rawSys.length > 2) {
-                             finalSys = rawSys; 
-                        }
+                        else if (sysText.includes("HNO") || sysText.includes("HNA") || sysText.includes("QUIMICO") || sysText.includes("QUÍMICO")) finalSys = "Químicos";
+                        else if (sysText.includes("HSO") || sysText.includes("SULFURICO") || sysText.includes("ACIDO") || sysText.includes("H2SO4")) finalSys = "Ácido Sulfúrico";
+                        else if (sysText.includes("WW") || sysText.includes("EFLUENTE") || sysText.includes("ESGOTO") || sysText.includes("TRATAMENTO")) finalSys = "Efluentes";
+                        else if (sysText.includes("CA-") || sysText.includes("-CA") || sysText.includes(" CAP ") || sysText.includes("AR COMP") || sysText.includes("COMPRIMIDO") || sysText === "CA" || sysText === "CAP") finalSys = "Ar Comprimido";
+                        else if (rawSys.length > 2) finalSys = rawSys; 
 
                         return {
                             sistema: finalSys, 
@@ -92,6 +73,8 @@ async function carregarExcel(input) {
                             local: getValue(linha, ["Local", "Area"]), 
                             calib: getValue(linha, ["Calibração (SIM ou NÃO)", "Calibracao", "Criticidade"]),
                             status_calib: getValue(linha, ["Status de qualificação", "Status", "Situação"]),
+                            defeito: getValue(linha, ["Defeito", "Com defeito", "Falha"]), 
+                            observacao: getValue(linha, ["Observação", "Observacao", "Obs", "Motivo"]), // NOVA COLUNA DE OBSERVAÇÃO
                             origem: origem
                         };
                     });
@@ -122,12 +105,12 @@ async function carregarExcel(input) {
 }
 
 // =====================================================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO E FILTROS
 // =====================================================================
 
 function init() {
     if (rawData.length === 0) {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#0056b3;">📂 <b>Aguardando arquivos...</b><br>Selecione suas planilhas no botão acima.</td></tr>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#0056b3;">📂 <b>Aguardando arquivos...</b></td></tr>';
         return;
     }
     populateLocals();
@@ -155,14 +138,11 @@ function populateSystems() {
     systems.forEach(sys => {
         const opt = document.createElement('option');
         opt.value = sys;
-        
         let emoji = "🔧";
         if (sys === "Efluentes") emoji = "💧";
         if (sys === "Ar Comprimido") emoji = "💨";
-        if (sys === "Ácido Sulfúrico") emoji = "🧪";
-        if (sys === "Químicos") emoji = "🧪"; 
+        if (sys === "Ácido Sulfúrico" || sys === "Químicos") emoji = "🧪"; 
         if (sys.startsWith("PW_LOOP")) emoji = "💦"; 
-        
         opt.innerText = `${emoji} ${sys}`;
         select.appendChild(opt);
     });
@@ -173,6 +153,9 @@ function applyFilters() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const loc = document.getElementById('filterLocal').value;
     const calibType = document.getElementById('filterCalib').value;
+    
+    const defElement = document.getElementById('filterDefeito');
+    const defType = defElement ? defElement.value : "";
 
     const filtered = rawData.filter(item => {
         const iSys = String(item.sistema || "");
@@ -181,6 +164,7 @@ function applyFilters() {
         const iLoc = String(item.local || "").trim();
         const iCalib = String(item.calib || "").toUpperCase();
         const iStatus = String(item.status_calib || "").toUpperCase();
+        const iDefeito = String(item.defeito || "").toUpperCase(); 
 
         const matchSys = sys === "" || iSys === sys;
         const matchSearch = iTag.includes(search) || iDesc.includes(search);
@@ -192,19 +176,28 @@ function applyFilters() {
         else if (calibType === "REALIZADO") matchCalib = iCalib.startsWith("SIM") && iStatus.includes("OK");
         else if (calibType === "PENDENTE") matchCalib = iCalib.startsWith("SIM") && !iStatus.includes("OK");
 
-        return matchSys && matchSearch && matchLoc && matchCalib;
+        let matchDefeito = true;
+        if (defType === "SIM") matchDefeito = iDefeito.includes("SIM");
+        else if (defType === "OK") matchDefeito = !iDefeito.includes("SIM");
+
+        return matchSys && matchSearch && matchLoc && matchCalib && matchDefeito;
     });
 
     updateTable(filtered);
     updateKPIs(filtered);
 }
 
+// =====================================================================
+// RENDERIZAÇÃO DA TABELA E GRÁFICOS
+// =====================================================================
+
 function updateTable(data) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "";
 
     if(data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#999;">Nenhum dado encontrado.</td></tr>`;
+        // Atualizado colspan para 9 por conta da nova coluna
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:#999;">Nenhum dado encontrado.</td></tr>`;
         document.getElementById('tableFooter').innerText = "";
         return;
     }
@@ -219,37 +212,35 @@ function updateTable(data) {
         
         const iCalib = String(item.calib).toUpperCase();
         const isCalib = iCalib.startsWith("SIM");
-        const calibIcon = isCalib 
-            ? `<span class="calib-yes">SIM</span>` 
-            : `<span class="calib-no">${item.calib || "NÃO"}</span>`;
+        const calibIcon = isCalib ? `<span class="calib-yes">SIM</span>` : `<span class="calib-no">${item.calib || "NÃO"}</span>`;
+
+        const isDefeito = String(item.defeito).toUpperCase().includes("SIM");
+        const defeitoHtml = isDefeito 
+            ? '<span style="background-color:#f8d7da; color:#721c24; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em; border: 1px solid #f5c6cb;">🔴 DEFEITO</span>' 
+            : '<span style="color:#28a745; font-weight:bold; font-size:0.9em;">🟢 OK</span>';
+
+        // === NOVA LÓGICA PARA A OBSERVAÇÃO ===
+        // Se tiver texto na observação, ele mostra em itálico e com cor cinza escuro. Se não, mostra um "-" clarinho.
+        const obsHtml = item.observacao 
+            ? `<span style="font-size:0.85em; color:#444; font-style:italic;">${item.observacao}</span>` 
+            : `<span style="color:#ccc;">-</span>`;
 
         let sysClass = "sys-ar"; 
         let sysIcon = "🔧";
         let extraStyle = ""; 
         const sysName = String(item.sistema);
         
-        if (sysName === "Efluentes") { 
-            sysClass = "sys-eflu"; 
-            sysIcon = "💧"; 
-        } else if (sysName === "Ar Comprimido") { 
-            sysClass = "sys-ar"; 
-            sysIcon = "💨"; 
-        } else if (sysName === "Ácido Sulfúrico") {
-            sysClass = "sys-eflu"; 
-            sysIcon = "🧪";
-        } else if (sysName === "Químicos") {
-            sysClass = ""; 
-            sysIcon = "🧪";
-            extraStyle = "background-color: #8b5cf6; color: white;"; 
-        } else if (sysName.startsWith("PW_LOOP")) {
-            sysClass = ""; 
-            sysIcon = "💦";
-            // DEGRADÊ DE CORES PARA OS 5 LOOPS (do mais claro ao mais escuro)
-            if (sysName.includes("1")) extraStyle = "background-color: #00bfff; color: white;"; // Deep Sky Blue
-            else if (sysName.includes("2")) extraStyle = "background-color: #1e90ff; color: white;"; // Dodger Blue
-            else if (sysName.includes("3")) extraStyle = "background-color: #0073e6; color: white;"; // Azul Médio
-            else if (sysName.includes("4")) extraStyle = "background-color: #0059b3; color: white;"; // Azul Escuro
-            else if (sysName.includes("5")) extraStyle = "background-color: #004080; color: white;"; // Azul Marinho
+        if (sysName === "Efluentes") { sysClass = "sys-eflu"; sysIcon = "💧"; } 
+        else if (sysName === "Ar Comprimido") { sysClass = "sys-ar"; sysIcon = "💨"; } 
+        else if (sysName === "Ácido Sulfúrico") { sysClass = "sys-eflu"; sysIcon = "🧪"; } 
+        else if (sysName === "Químicos") { sysClass = ""; sysIcon = "🧪"; extraStyle = "background-color: #8b5cf6; color: white;"; } 
+        else if (sysName.startsWith("PW_LOOP")) {
+            sysClass = ""; sysIcon = "💦";
+            if (sysName.includes("1")) extraStyle = "background-color: #00bfff; color: white;"; 
+            else if (sysName.includes("2")) extraStyle = "background-color: #1e90ff; color: white;"; 
+            else if (sysName.includes("3")) extraStyle = "background-color: #0073e6; color: white;"; 
+            else if (sysName.includes("4")) extraStyle = "background-color: #0059b3; color: white;"; 
+            else if (sysName.includes("5")) extraStyle = "background-color: #004080; color: white;"; 
             else extraStyle = "background-color: #00bfff; color: white;"; 
         }
 
@@ -261,7 +252,8 @@ function updateTable(data) {
             <td>${item.local}</td>
             <td>${calibIcon}</td>
             <td>${statusHtml}</td>
-            <td style="font-size:0.8em; color:#999;">${item.origem}</td>
+            <td>${defeitoHtml}</td>
+            <td>${obsHtml}</td> <td style="font-size:0.8em; color:#999;">${item.origem}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -274,6 +266,7 @@ function updateKPIs(data) {
     let pendingTags = 0;
     let totalCritical = 0; 
     let totalDone = 0;
+    let totalDefeitos = 0; 
 
     data.forEach(item => {
         totalItems++;
@@ -285,11 +278,18 @@ function updateKPIs(data) {
                 totalDone++;
             }
         }
+
+        if(String(item.defeito).toUpperCase().includes("SIM")) {
+            totalDefeitos++;
+        }
     });
 
     animateValue("kpiTotal", totalItems);
     animateValue("kpiPending", pendingTags);
     animateValue("kpiCalib", totalCritical);
+    
+    const kpiDefEl = document.getElementById("kpiDefeito");
+    if(kpiDefEl) animateValue("kpiDefeito", totalDefeitos);
 
     const chartElement = document.getElementById("chartDonut");
     if (chartElement) {

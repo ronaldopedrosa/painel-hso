@@ -3,49 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hub de Monitoramento Integrado - HSO</title>
+    <title>Gestão de Ativos - Utilidades HSO</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
-<title>Gestão de Ativos - Utilidades HSO</title>
-
 </head>
 <body>
 
-   <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
+    <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
         <div class="header-title">
             <h1 style="margin:0; font-size: 1.5rem;">Painel de Gestão de Ativos e Calibração</h1>
             <p style="margin:5px 0 0; opacity: 0.8;">Monitoramento Integrado: Efluentes (WW), Ar Comprimido (CA/CAP), Químicos (HNO/HNA) e PW (LOOP 1 ao 5)</p>
         </div>
         
-        <div>
-            <label for="excelInput" style="cursor:pointer; background-color: white; color: #0056b3; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                📂 Carregar Planilha
-            </label>
-            <input type="file" id="excelInput" accept=".xlsx, .xls" multiple style="display:none;" onchange="carregarExcel(this)">
+        <div style="display: flex; gap: 10px;">
+            <div>
+                <label for="excelInput" style="cursor:pointer; background-color: white; color: #0056b3; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                    📂 Carregar Planilha
+                </label>
+                <input type="file" id="excelInput" accept=".xlsx, .xls" multiple style="display:none;" onchange="carregarExcel(this)">
+            </div>
+
+            <button onclick="limparDados()" style="cursor:pointer; background-color: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                🗑️ Limpar
+            </button>
         </div>
     </div>
 
-   <div class="kpi-container">
-        <div class="kpi-card kpi-total">
+<div class="kpi-container" style="display: flex; gap: 15px; padding: 20px 30px; flex-wrap: wrap;">
+        
+        <div class="kpi-card kpi-total" style="flex: 1; min-width: 200px;">
             <h3>Ativos Visíveis</h3>
             <div class="value" id="kpiTotal">0</div>
             <div class="meta">Instrumentos Listados</div>
         </div>
 
-        <div class="kpi-card kpi-alert">
-            <h3>Pendências de TAG</h3>
-            <div class="value" id="kpiPending">0</div>
-            <div class="meta">Itens sem Identificação</div>
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid #dc3545; flex: 1; min-width: 200px;">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 10px;">Com Defeito</div>
+            <div id="kpiDefeito" style="font-size: 2.5rem; font-weight: bold; color: #dc3545; line-height: 1;">0</div>
+            <div style="font-size: 0.85rem; color: #aaa; margin-top: 5px;">Aguardando Manutenção</div>
         </div>
 
-        <div class="kpi-card kpi-success">
+        <div class="kpi-card kpi-success" style="flex: 1; min-width: 200px;">
             <h3>Instrumentos Críticos</h3>
             <div class="value" id="kpiCalib">0</div>
             <div class="meta">Requerem Calibração (SIM)</div>
         </div>
 
-        <div class="kpi-card kpi-progress">
+        <div class="kpi-card kpi-progress" style="flex: 1; min-width: 250px;">
             <h3>Progresso Calibração</h3>
             <div class="chart-wrapper">
                 <div class="circular-chart" id="chartDonut">
@@ -57,62 +62,69 @@
                 </div>
             </div>
         </div>
+        
     </div>
 
-    <div class="control-panel">
-        <div class="input-group">
+    <div class="control-panel" style="display: flex; gap: 15px; padding: 0 30px 20px; flex-wrap: wrap; align-items: flex-end;">
+        <div class="input-group" style="flex: 1; min-width: 150px;">
             <label>🏭 Selecionar Sistema</label>
             <select id="filterSystem" class="form-select" onchange="applyFilters()">
                 <option value="">Mostrar Tudo</option>
-                <option value="Efluentes">💧 Efluentes (WW)</option>
-                <option value="Ar Comprimido">💨 Ar Comprimido (CA/CAP)</option>
             </select>
         </div>
 
-        <div class="input-group">
+        <div class="input-group" style="flex: 1; min-width: 150px;">
             <label>📍 Filtrar por Local</label>
             <select id="filterLocal" class="form-select" onchange="applyFilters()">
                 <option value="">Todos os Locais</option>
-                </select>
+            </select>
         </div>
 
-        <div class="input-group" style="flex: 2;">
+        <div class="input-group" style="flex: 2; min-width: 200px;">
             <label>🔍 Busca Rápida</label>
-            <input type="text" id="searchInput" class="form-input" placeholder="Digite TAG, Descrição, Modelo..." onkeyup="applyFilters()">
+            <input type="text" id="searchInput" class="form-input" placeholder="Digite TAG, Descrição..." onkeyup="applyFilters()">
         </div>
         
-        <div style="flex: 1; min-width: 200px;">
-    <label for="filterCalib" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">🎯 Calibração</label>
-    <select id="filterCalib" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: white;">
-        <option value="">📊 Mostrar Tudo</option>
-        <option value="SIM">⚠️ Críticos (Todos)</option>
-        <option value="REALIZADO">✅ Críticos - Concluídos</option>
-        <option value="PENDENTE">⏳ Críticos - Pendentes</option>
-        <option value="NÃO">⚪ Não Críticos</option>
-    </select>
-</div>
+        <div style="flex: 1; min-width: 150px;">
+            <label for="filterCalib" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">🎯 Calibração</label>
+            <select id="filterCalib" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+                <option value="">📊 Mostrar Tudo</option>
+                <option value="SIM">⚠️ Críticos (Todos)</option>
+                <option value="REALIZADO">✅ Críticos - Concluídos</option>
+                <option value="PENDENTE">⏳ Críticos - Pendentes</option>
+                <option value="NÃO">⚪ Não Críticos</option>
+            </select>
+        </div>
+
+        <div style="flex: 1; min-width: 150px;">
+            <label for="filterDefeito" style="display: block; font-weight: bold; margin-bottom: 5px; color: #555;">🛠️ Condição</label>
+            <select id="filterDefeito" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+                <option value="">Mostrar Tudo</option>
+                <option value="OK">🟢 Operacionais</option>
+                <option value="SIM">🔴 Com Defeito</option>
+            </select>
+        </div>
     </div>
 
-    <div class="table-wrapper">
-        <table>
+    <div class="table-wrapper" style="padding: 0 30px 30px;">
+        <table style="width: 100%; border-collapse: collapse;">
             <thead>
-                <tr>
-                    <th width="12%">Sistema</th>
-                    <th width="15%">TAG</th>
-                    <th width="30%">Descrição do Equipamento</th>
-                    <th width="12%">Local</th>
-                    <th width="10%">Calibração?</th>
-                    <th width="10%">Status</th>
-                    <th width="11%" style="font-size:0.8em; color:#999;">Origem</th>
+                <tr style="text-align: left; background-color: #f8f9fa; color: #555; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 12px 8px; width: 10%;">Sistema</th>
+                    <th style="padding: 12px 8px; width: 12%;">TAG</th>
+                    <th style="padding: 12px 8px; width: 20%;">Descrição do Equipamento</th>
+                    <th style="padding: 12px 8px; width: 10%;">Local</th>
+                    <th style="padding: 12px 8px; width: 10%;">Calibração?</th>
+                    <th style="padding: 12px 8px; width: 8%;">Status</th>
+                    <th style="padding: 12px 8px; width: 10%;">Condição</th> <th style="padding: 12px 8px; width: 12%;">Observação</th> <th style="padding: 12px 8px; width: 8%; font-size:0.8em; color:#999;">Origem</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
-                </tbody>
+            </tbody>
         </table>
         <div id="tableFooter" style="padding: 10px 20px; text-align: right; color: #777; font-size: 0.85rem; border-top: 1px solid #eee;"></div>
     </div>
-         <script src="js/script.js"></script>
-</body>
-</html>
+
+    <script src="js/script.js"></script>
 </body>
 </html>
