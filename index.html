@@ -13,7 +13,7 @@
     <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
         <div class="header-title">
             <h1 style="margin:0; font-size: 1.5rem;">Painel de Gestão de Ativos e Calibração</h1>
-            <p style="margin:5px 0 0; opacity: 0.8;">Monitoramento Integrado: Efluentes (WW), Ar Comprimido (CA/CAP), Químicos (HNO/HNA) e PW (LOOP 1 ao 5)</p>
+            <p style="margin:5px 0 0; opacity: 0.8;">Monitoramento Integrado: Efluentes (WW), Ar Comprimido (CA/CAP), Químicos (HNO/HNA), BWT, WFI e PW (LOOP 1 ao 5)</p>
         </div>
         
         <div style="display: flex; gap: 10px;">
@@ -67,7 +67,7 @@
 
     <div class="control-panel" style="display: flex; gap: 15px; padding: 0 30px 20px; flex-wrap: wrap; align-items: flex-end;">
         <div class="input-group" style="flex: 1; min-width: 150px;">
-            <label>🏭 Selecionar Sistema</label>
+            <label>🏭 Selecionar Sala/Sistema</label>
             <select id="filterSystem" class="form-select" onchange="applyFilters()">
                 <option value="">Mostrar Tudo</option>
             </select>
@@ -110,13 +110,15 @@
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="text-align: left; background-color: #f8f9fa; color: #555; border-bottom: 2px solid #ddd;">
-                    <th style="padding: 12px 8px; width: 10%;">Sistema</th>
+                    <th style="padding: 12px 8px; width: 10%;">Sala/Sistema</th>
                     <th style="padding: 12px 8px; width: 12%;">TAG</th>
                     <th style="padding: 12px 8px; width: 20%;">Descrição do Equipamento</th>
                     <th style="padding: 12px 8px; width: 10%;">Local</th>
                     <th style="padding: 12px 8px; width: 10%;">Calibração?</th>
                     <th style="padding: 12px 8px; width: 8%;">Status</th>
-                    <th style="padding: 12px 8px; width: 10%;">Condição</th> <th style="padding: 12px 8px; width: 12%;">Observação</th> <th style="padding: 12px 8px; width: 8%; font-size:0.8em; color:#999;">Origem</th>
+                    <th style="padding: 12px 8px; width: 10%;">Condição</th> 
+                    <th style="padding: 12px 8px; width: 12%;">Motivo</th> 
+                    <th style="padding: 12px 8px; width: 8%; font-size:0.8em; color:#999;">Origem</th>
                 </tr>
             </thead>
             <tbody id="tableBody">

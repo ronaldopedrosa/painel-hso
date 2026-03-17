@@ -30,7 +30,9 @@ async function carregarExcel(input) {
 
                     function getValue(row, possibleNames) {
                         const rowKeys = Object.keys(row);
-                        const normalize = (str) => String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+                        // RADAR BLINDADO: Remove acentos e TODOS os espaços/quebras de linha para garantir que vai achar a coluna
+                        const normalize = (str) => String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+                        
                         for (let name of possibleNames) {
                             const target = normalize(name);
                             const foundKey = rowKeys.find(key => normalize(key) === target);
@@ -40,8 +42,9 @@ async function carregarExcel(input) {
                     }
 
                     const dadosProcessados = jsonExcel.map(linha => {
-                        // PEGA EXATAMENTE O QUE ESTÁ ESCRITO NA COLUNA
-                        const rawSys = getValue(linha, ["Sala/Sistema", "Sistema", "Area", "Grupos de Instrumentos"]);
+                        // ROTA DE FUGA REMOVIDA: Agora ele busca estritamente as variações de Sistema/Sala
+                        const rawSys = getValue(linha, ["Sala/Sistema", "Sala", "Sistema", "Area"]);
+                        
                         const tag = getValue(linha, ["TAG Hemobrás", "TAG", "Tag", "Instrumento", "Codigo"]);
                         const desc = getValue(linha, ["Descrição dos Equipamentos", "Descrição", "Descricao", "Nome"]);
                         const origem = getValue(linha, ["ORIGEM", "Origem"]);
@@ -92,10 +95,9 @@ async function carregarExcel(input) {
 // =====================================================================
 
 function init() {
-    // ATUALIZA O SUBTÍTULO AUTOMATICAMENTE COM BWT
     const subtitulo = document.querySelector('header p') || document.querySelector('p');
     if (subtitulo) {
-        subtitulo.innerHTML = "Monitoramento Integrado: Efluentes (WW), Ar Comprimido (CA/CAP), Químicos (HNO/HNA), BWT e PW (LOOP 1 ao 5)";
+        subtitulo.innerHTML = "Monitoramento Integrado: Efluentes (WW), Ar Comprimido (CA/CAP), Químicos (HNO/HNA), BWT, WFI e PW (LOOP 1 ao 5)";
     }
 
     if (rawData.length === 0) {
@@ -130,11 +132,11 @@ function populateSystems() {
         let emoji = "🔧";
         const sUp = sys.toUpperCase();
         
-        // INTELIGÊNCIA APENAS PARA COLOCAR O EMOJI CORRETO NO FILTRO
         if (sUp.includes("EFLUENTE") || sUp === "WW") emoji = "💧";
         else if (sUp.includes("AR COMP") || sUp === "CA" || sUp === "CAP") emoji = "💨";
         else if (sUp.includes("QUIMICO") || sUp.includes("ÁCIDO") || sUp.includes("HNO") || sUp.includes("HNA")) emoji = "🧪"; 
         else if (sUp.includes("BWT")) emoji = "💧";
+        else if (sUp.includes("WFI")) emoji = "💧";
         else if (sUp.includes("PW") || sUp.includes("LOOP")) emoji = "💦"; 
         
         opt.innerText = `${emoji} ${sys}`;
@@ -218,16 +220,16 @@ function updateTable(data) {
 
         let sysClass = "sys-ar"; 
         let sysIcon = "🔧";
-        let extraStyle = "background-color: #6c757d; color: white;"; // Cor padrão Cinza
+        let extraStyle = "background-color: #6c757d; color: white;"; 
         
         const sysName = String(item.sistema);
         const sUp = sysName.toUpperCase();
         
-        // INTELIGÊNCIA APENAS PARA CORES E ÍCONES NA TABELA (Mantém o nome real da planilha)
         if (sUp.includes("EFLUENTE") || sUp === "WW") { sysClass = "sys-eflu"; sysIcon = "💧"; extraStyle = "background-color: #17a2b8; color: white;"; } 
         else if (sUp.includes("AR COMP") || sUp === "CA" || sUp === "CAP") { sysClass = "sys-ar"; sysIcon = "💨"; extraStyle = "background-color: #6c757d; color: white;"; } 
         else if (sUp.includes("SULFURICO") || sUp.includes("QUIMICO") || sUp.includes("HNO") || sUp.includes("HNA")) { sysClass = ""; sysIcon = "🧪"; extraStyle = "background-color: #8b5cf6; color: white;"; } 
         else if (sUp.includes("BWT")) { sysClass = ""; sysIcon = "💧"; extraStyle = "background-color: #0ea5e9; color: white;"; } 
+        else if (sUp.includes("WFI")) { sysClass = ""; sysIcon = "💧"; extraStyle = "background-color: #00ced1; color: white;"; } 
         else if (sUp.includes("PW") || sUp.includes("LOOP")) {
             sysClass = ""; sysIcon = "💦";
             if (sUp.includes("1")) extraStyle = "background-color: #00bfff; color: white;"; 
