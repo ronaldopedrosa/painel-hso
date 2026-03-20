@@ -156,13 +156,39 @@ function applyFilters() {
         const matchSearch = iTag.includes(search) || iDesc.includes(search);
         const matchLoc = loc === "" || iLoc === loc;
         
+        // --- INÍCIO DA NOVA LÓGICA DE FILTRO DE CALIBRAÇÃO ---
+        const smText = String(item.certSM).toUpperCase();
+        const svcText = String(item.aprSVC).toUpperCase();
+        const statusQualif = String(item.status_calib).toUpperCase();
+        const isCalib = iCalib.startsWith("SIM");
+
         let matchCalib = true;
-        if (calibType === "SIM") matchCalib = iCalib.startsWith("SIM");
-        else if (calibType === "NÃO") matchCalib = !iCalib.startsWith("SIM");
-        else if (calibType === "AGUARDANDO_SM") matchCalib = item.workflowCategory === "AGUARDANDO_SM";
-        else if (calibType === "CERTIFICADO_APROVADO") matchCalib = item.workflowCategory === "CERTIFICADO_APROVADO";
-        else if (calibType === "CONCLUIDO") matchCalib = item.workflowCategory === "CONCLUIDO";
-        else if (calibType === "REPROVADO") matchCalib = item.workflowCategory === "REPROVADO";
+        
+        if (calibType === "SIM") {
+            matchCalib = isCalib; // Críticos
+        } else if (calibType === "NÃO") {
+            matchCalib = !isCalib; // Não Críticos
+        } else if (calibType === "CALIBRADOS") {
+            // Nova Opção: Traz tudo que conta no gráfico de Progresso!
+            matchCalib = isCalib && (
+                svcText.includes("SIM") || svcText.includes("OK") || svcText.includes("APROVADO") ||
+                smText.includes("SIM") || smText.includes("APROVADO") || smText.includes("OK") ||
+                statusQualif.includes("OK") || statusQualif === "SIM"
+            );
+        } else if (calibType === "CONCLUIDO") {
+            matchCalib = isCalib && (svcText.includes("SIM") || svcText.includes("OK") || svcText.includes("APROVADO"));
+        } else if (calibType === "CERTIFICADO_APROVADO") {
+            const isSvcAprovado = (svcText.includes("SIM") || svcText.includes("OK") || svcText.includes("APROVADO"));
+            matchCalib = isCalib && !isSvcAprovado && (smText.includes("SIM") || smText.includes("APROVADO") || smText.includes("OK"));
+        } else if (calibType === "REPROVADO") {
+            matchCalib = isCalib && (svcText.includes("NÃO") || smText.includes("NÃO"));
+        } else if (calibType === "AGUARDANDO_SM") {
+            const isSvcAprovado = (svcText.includes("SIM") || svcText.includes("OK") || svcText.includes("APROVADO"));
+            const isSmAprovado = (smText.includes("SIM") || smText.includes("APROVADO") || smText.includes("OK"));
+            const isReprovado = (svcText.includes("NÃO") || smText.includes("NÃO"));
+            matchCalib = isCalib && !isSvcAprovado && !isSmAprovado && !isReprovado;
+        }
+        // --- FIM DA LÓGICA DE CALIBRAÇÃO ---
 
         let matchDefeito = true;
         if (defType === "SIM") matchDefeito = iDefeito.includes("SIM");
