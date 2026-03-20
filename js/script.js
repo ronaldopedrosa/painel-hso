@@ -288,8 +288,17 @@ function updateKPIs(data) {
         
         if(item.calib && String(item.calib).toUpperCase().startsWith("SIM")) {
             totalCritical++;
-            // LÓGICA DO GRÁFICO: Agora a categoria "CONCLUIDO" já absorve tanto o "SVC" quanto o "Status = OK" da planilha!
-            if (item.workflowCategory === "CONCLUIDO" || item.workflowCategory === "CERTIFICADO_APROVADO") {
+            
+            // Puxa o valor da coluna "Status de qualificação"
+            let statusQualif = String(item.status_calib).toUpperCase(); 
+
+            // LÓGICA DO GRÁFICO CORRIGIDA: 
+            // Agora ele conta se a categoria for "Concluído", "Certificado Aprovado" 
+            // OU se a coluna "Status de Qualificação" da planilha estiver como OK ou SIM.
+            if (item.workflowCategory === "CONCLUIDO" || 
+                item.workflowCategory === "CERTIFICADO_APROVADO" || 
+                statusQualif.includes("OK") || 
+                statusQualif === "SIM") {
                 totalDone++;
             }
         }
