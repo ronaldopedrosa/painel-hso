@@ -60,7 +60,7 @@ async function carregarExcel(input) {
 
 function init() {
     if (rawData.length === 0) {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:#0056b3;">📂 <b>Aguardando arquivos...</b></td></tr>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#0056b3;">📂 <b>Aguardando arquivos...</b></td></tr>';
         return;
     }
     populateLocals();
@@ -108,30 +108,30 @@ function applyFilters() {
         const iTag = String(item.tag || "").toLowerCase();
         const iDesc = String(item.desc || "").toLowerCase();
         const iLoc = String(item.local || "").trim();
-        const iCalib = String(item.calib || "").toUpperCase();
-        const isCalib = iCalib.startsWith("SIM");
-        const iDefeito = String(item.defeito || "").toUpperCase(); 
+        const isCalib = String(item.calib || "").toUpperCase().startsWith("SIM");
+        
+        const statusQualif = String(item.status_calib || "").toUpperCase();
+        const smText = String(item.certSM || "").toUpperCase();
+        
+        const isCalibradoOK = statusQualif === "OK";
+        const isCertificadoAprovado = smText.includes("SIM") || smText.includes("OK") || smText.includes("APROVADO");
 
-        const smText = String(item.certSM).toUpperCase();
-        const svcText = String(item.aprSVC).toUpperCase();
-        const statusQualif = String(item.status_calib).toUpperCase();
-
-        // Lógica de Concluído para bater com o gráfico
-        const isDone = (svcText.includes("SIM") || svcText.includes("OK") || statusQualif.includes("OK") ||
-                        smText.includes("SIM") || smText.includes("OK") || smText.includes("APROVADO"));
-
+        // Lógica de Filtro Restrita 
         let matchCalib = true;
         if (calibType === "SIM") matchCalib = isCalib;
         else if (calibType === "NÃO") matchCalib = !isCalib;
-        else if (calibType === "CALIBRADOS") matchCalib = isCalib && isDone;
-        else if (calibType === "AGUARDANDO_CALIBRACAO") matchCalib = isCalib && !isDone;
-        else if (calibType === "CONCLUIDO") matchCalib = isCalib && (svcText.includes("SIM") || svcText.includes("OK"));
-        else if (calibType === "CERTIFICADO_APROVADO") matchCalib = isCalib && !svcText.includes("SIM") && (smText.includes("SIM") || smText.includes("OK"));
-        else if (calibType === "AGUARDANDO_SM") matchCalib = isCalib && !isDone && !smText.includes("SIM") && !smText.includes("OK");
+        else if (calibType === "AGUARDANDO_CALIBRACAO") matchCalib = isCalib && !isCalibradoOK;
+        else if (calibType === "CALIBRADOS") matchCalib = isCalib && isCalibradoOK;
+        else if (calibType === "AGUARDANDO_SM") matchCalib = isCalib && !isCertificadoAprovado;
+        else if (calibType === "CERTIFICADO_APROVADO") matchCalib = isCalib && isCertificadoAprovado;
 
+        const iDefeito = String(item.defeito || "").toUpperCase();
         const matchDefeito = defType === "SIM" ? iDefeito.includes("SIM") : (defType === "OK" ? !iDefeito.includes("SIM") : true);
 
-        return (sys === "" || iSys === sys) && (iTag.includes(search) || iDesc.includes(search)) && (loc === "" || iLoc === loc) && matchCalib && matchDefeito;
+        return (sys === "" || iSys === sys) && 
+               (iTag.includes(search) || iDesc.includes(search)) && 
+               (loc === "" || iLoc === loc) && 
+               matchCalib && matchDefeito;
     });
 
     updateTable(filtered);
@@ -140,24 +140,31 @@ function applyFilters() {
 
 function updateTable(data) {
     const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = data.length === 0 ? '<tr><td colspan="9" style="text-align:center; padding:30px; color:#999;">Nenhum dado encontrado.</td></tr>' : "";
+    tbody.innerHTML = data.length === 0 ? '<tr><td colspan="10" style="text-align:center; padding:30px; color:#999;">Nenhum dado encontrado.</td></tr>' : "";
 
     data.forEach(item => {
         const isCalib = String(item.calib).toUpperCase().startsWith("SIM");
-        const smText = String(item.certSM).toUpperCase();
-        const svcText = String(item.aprSVC).toUpperCase();
         const statusQualif = String(item.status_calib).toUpperCase();
+        const smText = String(item.certSM).toUpperCase();
         
-        let workflowHtml = '<span style="color:#ccc;">-</span>';
+        // Regra: Progresso Calibração [cite: 15, 19]
+        let progressoHtml = '<span style="color:#ccc;">-</span>';
         if (isCalib) {
-            if (svcText.includes("SIM") || svcText.includes("OK") || statusQualif.includes("OK")) 
-                workflowHtml = '<span style="background-color:#d4edda; color:#155724; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">✅ Concluído</span>';
-            else if (svcText.includes("NÃO") || smText.includes("NÃO")) 
-                workflowHtml = '<span style="background-color:#f8d7da; color:#721c24; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">❌ Reprovado</span>';
-            else if (smText.includes("SIM") || smText.includes("OK") || smText.includes("APROVADO")) 
-                workflowHtml = '<span style="background-color:#cce5ff; color:#004085; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">Certificado Aprovado</span>';
-            else 
-                workflowHtml = '<span style="background-color:#e2e3e5; color:#383d41; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">📥 Aguardando Cert.</span>';
+            if (statusQualif === "OK") {
+                progressoHtml = '<span style="background-color:#d4edda; color:#155724; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">Calibrado OK</span>';
+            } else {
+                progressoHtml = '<span style="background-color:#fff3cd; color:#856404; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">Aguardando Calibração</span>';
+            }
+        }
+
+        // Regra: Status da Certificação [cite: 15, 19]
+        let certHtml = '<span style="color:#ccc;">-</span>';
+        if (isCalib) {
+            if (smText.includes("SIM") || smText.includes("OK") || smText.includes("APROVADO")) {
+                certHtml = '<span style="background-color:#cce5ff; color:#004085; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">Certificado Aprovado</span>';
+            } else {
+                certHtml = '<span style="background-color:#e2e3e5; color:#383d41; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:0.85em;">Aguardando Certificado</span>';
+            }
         }
 
         const isDefeito = String(item.defeito).toUpperCase().includes("SIM");
@@ -167,8 +174,9 @@ function updateTable(data) {
             <td>${item.tag || '<span style="color:red">S/ TAG</span>'}</td>
             <td>${item.desc}</td>
             <td>${item.local}</td>
-            <td>${isCalib ? '<span style="color:green; font-weight:bold;">SIM</span>' : '<span style="color:#ccc;">NÃO</span>'}</td>
-            <td style="text-align: center;">${workflowHtml}</td>
+            <td><b style="color:${isCalib ? '#28a745' : '#ccc'}">${isCalib ? 'SIM' : 'NÃO'}</b></td>
+            <td style="text-align: center;">${progressoHtml}</td>
+            <td style="text-align: center;">${certHtml}</td>
             <td>${isDefeito ? '<span style="color:red; font-weight:bold;">🔴 DEFEITO</span>' : '<span style="color:green;">🟢 OK</span>'}</td>
             <td><span style="font-size:0.85em; font-style:italic;">${item.observacao || "-"}</span></td>
             <td style="font-size:0.8em; color:#999;">${item.origem}</td>
@@ -186,13 +194,8 @@ function updateKPIs(data) {
         const isCalib = item.calib && String(item.calib).toUpperCase().startsWith("SIM");
         if(isCalib) {
             totalCritical++;
-            const isDone = String(item.aprSVC).toUpperCase().includes("SIM") || 
-                           String(item.aprSVC).toUpperCase().includes("OK") ||
-                           String(item.status_calib).toUpperCase().includes("OK") ||
-                           String(item.certSM).toUpperCase().includes("SIM") ||
-                           String(item.certSM).toUpperCase().includes("OK") ||
-                           String(item.certSM).toUpperCase().includes("APROVADO");
-            if (isDone) totalDone++;
+            // KPI baseado exclusivamente no "Status de Qualificação = OK" [cite: 15, 19]
+            if (String(item.status_calib).toUpperCase() === "OK") totalDone++;
         }
         if(String(item.defeito).toUpperCase().includes("SIM")) totalDefeitos++;
     });
