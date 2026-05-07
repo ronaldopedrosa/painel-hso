@@ -1,0 +1,250 @@
+/* ==========================================================================
+   RESET E CONFIGURAÇÕES BASE
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f7f6; /* Fundo cinza claro/azulado moderno */
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   CABEÇALHO (HEADER)
+   ========================================================================== */
+.header-bar {
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid #e0e4e8;
+}
+
+.header-title h1 {
+    color: #0056b3;
+    font-weight: 700;
+}
+
+.header-title p {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+button {
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ==========================================================================
+   CARTÕES DE KPI (INDICADORES)
+   ========================================================================== */
+.kpi-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-card h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.kpi-card .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.kpi-card .meta {
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+/* Cores específicas das bordas dos KPIs */
+.kpi-total { border-left: 5px solid #0056b3; }
+.kpi-total .value { color: #0056b3; }
+
+.kpi-success { border-left: 5px solid #28a745; }
+.kpi-success .value { color: #28a745; }
+
+.kpi-progress { border-left: 5px solid #17a2b8; }
+
+/* ==========================================================================
+   GRÁFICO DE ROSCA (DONUT CHART)
+   ========================================================================== */
+.chart-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.circular-chart {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: conic-gradient(#e0e0e0 0% 100%); /* Atualizado via JS */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+}
+
+/* O furo da rosca (círculo branco no meio) */
+.circular-chart::before {
+    content: "";
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    background-color: #ffffff;
+    border-radius: 50%;
+}
+
+.circular-chart span {
+    position: relative;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #333;
+    z-index: 1;
+}
+
+.chart-legend {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #555;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* ==========================================================================
+   PAINEL DE CONTROLE (FILTROS)
+   ========================================================================== */
+.control-panel {
+    background-color: transparent;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.form-select, .form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: #495057;
+    background-color: #ffffff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    outline: none;
+}
+
+.form-select:focus, .form-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* ==========================================================================
+   TABELA
+   ========================================================================== */
+.table-wrapper {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin: 0 30px 30px;
+    overflow-x: auto; /* Permite rolagem horizontal se a tela for pequena */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 15px 10px;
+    border-bottom: 2px solid #dee2e6;
+    letter-spacing: 0.5px;
+}
+
+tbody td {
+    padding: 12px 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+#tableFooter {
+    background-color: #ffffff;
+    border-radius: 0 0 8px 8px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   UTILITÁRIOS E BADGES (ETIQUETAS)
+   ========================================================================== */
+.sys-badge {
+    display: inline-block;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    white-space: nowrap;
+}
+
+/* Scrollbar customizada para a tabela */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
