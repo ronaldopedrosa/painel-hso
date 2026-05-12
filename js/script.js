@@ -17,6 +17,8 @@ const urlsPlanilhas = [
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vStQ-dQGMiRBu6xWyRRna8X6lb4BUCy3jYRR_ZLHKvLcgNMnJOyPLS3C993D8AXFAFwWz0_v1AanAEh/pub?gid=1321003855&single=true&output=tsv",
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5euNfPajNV6mwpRH9rvMkvKb2bzw25JEteGzCfsyXH_rPBbUA74ctAo_3OnkqgGTEIw8eVMcgC36q/pub?gid=312367184&single=true&output=tsv",
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ50A1GhQW0wVQej_9VpVvIP8LFH3yGeaOFDAoM7FkQ3ufxLyRsvHJ2PYZAUe9p88plkY2kgGs_4rKB/pub?gid=835352193&single=true&output=tsv",
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpMooQXPhirFK2vEz_GhEFhttO_t9XW6tLvD3pd-H3zp4lO44Ic0Bs7E5woh1lBRpXi8S4ZmTR7hfJ/pub?gid=673959138&single=true&output=tsv",
+
 ];  
 
 async function carregarDadosOnline() {
